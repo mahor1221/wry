@@ -550,6 +550,14 @@ impl InnerWebView {
     Ok(self.webview.uri().unwrap_or_default().to_string())
   }
 
+  pub fn user_agent(&self) -> Result<String> {
+    let user_agent = WebViewExt::settings(&self.webview)
+      .and_then(|settings| settings.user_agent())
+      .unwrap_or_default()
+      .to_string();
+    Ok(user_agent)
+  }
+
   pub fn eval(
     &self,
     js: &str,

@@ -309,6 +309,12 @@ impl InnerWebView {
     rx.recv().map_err(Into::into)
   }
 
+  pub fn user_agent(&self) -> Result<String> {
+    let (tx, rx) = bounded(1);
+    MainPipe::send(WebViewMessage::GetUserAgent(tx));
+    rx.recv().map_err(Into::into)
+  }
+
   pub fn eval(&self, js: &str, callback: Option<impl Fn(String) + Send + 'static>) -> Result<()> {
     MainPipe::send(WebViewMessage::Eval(
       js.into(),

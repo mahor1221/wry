@@ -273,6 +273,31 @@ impl<'a> MainPipe<'a> {
             tx.send(url).unwrap()
           }
         }
+        WebViewMessage::GetUserAgent(tx) => {
+          if let Some(webview) = &self.webview {
+            let web_settings: JObject<'_> = self
+              .env
+              .call_method(webview.as_obj(), "getSettings", "()Landroid/webkit/WebSettings;", &[])
+              .unwrap()
+              .try_into()
+              .unwrap();
+
+            let user_agent = self
+              .env
+              .call_method(&web_settings, "getUserAgentString", "()Ljava/lang/String;", &[])
+              .and_then(|v| v.l())
+              .and_then(|s| {
+                let s = JString::from(s);
+                self
+                  .env
+                  .get_string(&s)
+                  .map(|v| v.to_string_lossy().to_string())
+              })
+              .unwrap_or_default();
+
+            tx.send(user_agent).unwrap()
+          }
+        }
         WebViewMessage::Jni(f) => {
           if let Some(w) = &self.webview {
             f(&mut self.env, activity, w.as_obj());
@@ -371,6 +396,7 @@ pub(crate) enum WebViewMessage {
   SetBackgroundColor(RGBA),
   GetWebViewVersion(Sender<Result<String, Error>>),
   GetUrl(Sender<String>),
+  GetUserAgent(Sender<String>),
   Jni(Box<dyn FnOnce(&mut JNIEnv, &JObject, &JObject) + Send>),
   LoadUrl(String, Option<http::HeaderMap>),
   ClearAllBrowsingData,

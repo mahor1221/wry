@@ -1152,6 +1152,16 @@ impl InnerWebView {
     unsafe { webview.Source(&mut pwstr)? };
     Ok(take_pwstr(pwstr))
   }
+
+  #[inline]
+  fn user_agent_from_webview(webview: &ICoreWebView2) -> windows::core::Result<String> {
+    let mut pwstr = PWSTR::null();
+    unsafe {
+      let settings2: ICoreWebView2Settings2 = webview.Settings()?.cast()?;
+      settings2.UserAgent(&mut pwstr)?
+    }
+    Ok(take_pwstr(pwstr))
+  }
 }
 
 /// Public APIs
@@ -1171,6 +1181,10 @@ impl InnerWebView {
 
   pub fn url(&self) -> Result<String> {
     Self::url_from_webview(&self.webview).map_err(Into::into)
+  }
+
+  pub fn user_agent(&self) -> Result<String> {
+    Self::user_agent_from_webview(&self.webview).map_err(Into::into)
   }
 
   pub fn zoom(&self, scale_factor: f64) -> Result<()> {

@@ -1294,6 +1294,11 @@ impl WebView {
     self.webview.url()
   }
 
+  /// Get the user agent of the webview
+  pub fn user_agent(&self) -> Result<String> {
+    self.webview.user_agent()
+  }
+
   /// Evaluate and run javascript code.
   pub fn evaluate_script(&self, js: &str) -> Result<()> {
     self
