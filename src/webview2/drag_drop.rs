@@ -15,24 +15,25 @@ use std::{
   rc::Rc,
 };
 
-use windows::Win32::{
-  Foundation::{self as win32f, BOOL, DRAGDROP_E_INVALIDHWND, HWND, LPARAM, POINT, POINTL},
-  Graphics::Gdi::ScreenToClient,
-  System::{
-    Com::{IDataObject, DVASPECT_CONTENT, FORMATETC, TYMED_HGLOBAL},
-    Ole::{
-      IDropTarget, IDropTarget_Impl, RegisterDragDrop, RevokeDragDrop, CF_HDROP, DROPEFFECT,
-      DROPEFFECT_COPY, DROPEFFECT_NONE,
+use windows::{
+  core::implement,
+  Win32::{
+    Foundation::{BOOL, DRAGDROP_E_INVALIDHWND, HWND, LPARAM, POINT, POINTL},
+    Graphics::Gdi::ScreenToClient,
+    System::{
+      Com::{IDataObject, DVASPECT_CONTENT, FORMATETC, TYMED_HGLOBAL},
+      Ole::{
+        IDropTarget, IDropTarget_Impl, RegisterDragDrop, RevokeDragDrop, CF_HDROP, DROPEFFECT,
+        DROPEFFECT_COPY, DROPEFFECT_NONE,
+      },
+      SystemServices::MODIFIERKEYS_FLAGS,
     },
-    SystemServices::MODIFIERKEYS_FLAGS,
-  },
-  UI::{
-    Shell::{DragFinish, DragQueryFileW, HDROP},
-    WindowsAndMessaging::EnumChildWindows,
+    UI::{
+      Shell::{DragFinish, DragQueryFileW, HDROP},
+      WindowsAndMessaging::EnumChildWindows,
+    },
   },
 };
-
-use windows_implement::implement;
 
 #[derive(Default)]
 pub(crate) struct DragDropController {
@@ -133,11 +134,12 @@ impl DragDropTarget {
 
         Some(hdrop)
       }
-      Err(error) => {
-        log::warn!(
+      Err(_error) => {
+        #[cfg(feature = "tracing")]
+        tracing::warn!(
           "{}",
-          match error.code() {
-            win32f::DV_E_FORMATETC => {
+          match _error.code() {
+            windows::Win32::Foundation::DV_E_FORMATETC => {
               // If the dropped item is not a file this error will occur.
               // In this case it is OK to return without taking further action.
               "Error occurred while processing dropped/hovered item: item is not a file."
